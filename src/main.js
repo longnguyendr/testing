@@ -9,17 +9,24 @@ export default class Main extends Component {
   constructor(props) {
     super(props);
     this.handleClick = this.handleClick.bind(this);
-    console.log(this.props);
+    this.state = {
+      sources: data,
+    };
   }
-
+  componentDidMount() {
+    console.log('Main Mounted');
+  }
+  componentWillUnmount() {
+    console.log('Main unmount');
+  }
   handleClick = channels => {
     const {navigation} = this.props;
-    // console.log('this is channels from click: ', channels);
     // this.props.navigation.push('Player', {channels: channels});
-    navigation.actions.reset(
-      navigation.push('Player', {channels: channels}),
-      0,
-    );
+    // navigation.actions.reset(
+    //   navigation.push('Player', {channels: channels}),
+    //   0,
+    // );
+    navigation.navigate('Player', {channels: channels});
   };
 
   render() {
@@ -27,7 +34,7 @@ export default class Main extends Component {
     return (
       <View style={styles.container}>
         <ScrollView horizontal>
-          {data.map(channels => (
+          {this.state.sources.map(channels => (
             <TouchableOpacity
               key={channels.id}
               onPress={() => this.handleClick(channels)}>

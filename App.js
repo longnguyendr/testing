@@ -4,15 +4,18 @@ import {createStackNavigator} from 'react-navigation-stack';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
 import SafeAreaView from 'react-native-safe-area-view';
 import Main from './src/main';
+import Home from './src/home';
 import Player from './src/components/player';
 
 const MainNavigator = createStackNavigator(
   {
+    Home: {screen: Home},
     Main: {screen: Main},
     Player: {screen: Player},
   },
   {
-    initialRouteName: 'Main',
+    initialRouteName: 'Home',
+    // initialRouteName: 'Main',
   },
 );
 

@@ -8,6 +8,12 @@ class Channels extends Component {
     super(props);
   }
 
+  componentDidMount(){
+    console.log('Channels mount');
+  }
+  componentWillUnmount(){
+    console.log('channels unmount');
+  }
   render() {
     const data = this.props.data;
     //    console.log(data);
