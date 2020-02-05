@@ -400,31 +400,6 @@ export default class Player extends React.Component {
           </TouchableOpacity>
         </View>
 
-        {/* Update Progress & Duration (Android) */}
-        {Platform.OS === 'android' && (
-          <View style={styles.buttonGroup}>
-            <TouchableOpacity
-              style={styles.button}
-              onPress={() =>
-                this._youTubeRef.current
-                  ? this._youTubeRef.current
-                      .getCurrentTime()
-                      .then(currentTime => this.setState({currentTime}))
-                      .catch(errorMessage =>
-                        this.setState({error: errorMessage}),
-                      ) &&
-                    this._youTubeRef.current
-                      .getDuration()
-                      .then(duration => this.setState({duration}))
-                      .catch(errorMessage =>
-                        this.setState({error: errorMessage}),
-                      )
-                  : ''
-              }>
-              <Text style={styles.buttonText}>Update Progress & Duration</Text>
-            </TouchableOpacity>
-          </View>
-        )}
         {/* Show Progress */}
         <Text style={styles.instructions}>
           Progress: {Math.trunc(this.state.currentTime)}s (
