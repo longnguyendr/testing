@@ -51,8 +51,14 @@ Then copy the apiKey to test/src/components/env.js
 Run the App:
 
 ```
-for development: npm run android
+if you update dependencies please run the following command immigrate the library to androidX:
+npx jetify 
 ```
+
+```
+for development: npm run android or npm run android --reset-cache
+```
+
 
 ```
 for product: npm run product
