@@ -18,10 +18,23 @@ Install the dependencies:
 $ cd testing
 $ npm install
 ```
-before run the app you must generate the API Key:
+Before run the app you must generate the API Key:
 
 <p align="center">
 <img width="600px" height="250px" src ="./src/assets/image/youtube1.png" /></p>
+
+<p align="center">
+<img width="600px" height="250px" src ="./src/assets/image/youtube2.png" /></p>
+
+<p align="center">
+<img width="600px" height="250px" src ="./src/assets/image/youtube3.png" /></p>
+
+<p align="center">
+<img width="600px" height="250px" src ="./src/assets/image/youtube4.png" /></p>
+
+<p align="center">
+<img width="600px" height="250px" src ="./src/assets/image/youtube5.png" /></p>
+
 
 or
 ```
