@@ -56,7 +56,10 @@ npx jetify
 ```
 
 ```
-for development: npm run android or npm run android --reset-cache
+for development: 
+npm run android 
+or 
+npm run android --reset-cache
 ```
 
 
