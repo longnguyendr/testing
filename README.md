@@ -21,7 +21,8 @@ $ npm install
 before run the app you must generate the API Key:
 
 <p align="center">
-<img width="800px" height="400px" src ="./src/assets/image/youtube1.png" /></p>
+<img width="600px" height="400px" src ="./src/assets/image/youtube1.png" /></p>
+
 or
 ```
 $ cordova platform add android 
