@@ -7,6 +7,7 @@ React-Native Youtube integrate
 * [React-native-cli](https://facebook.github.io/react-native/docs/getting-started)
 * [Node.js](https://nodejs.org/en/download/)
 * [Android Studio (android emulator) or real android devices](https://developer.android.com/studio)
+* [Youtube apiKey](https://nodejs.org/en/download/)
 
 ### Installing
 Clone the project:
