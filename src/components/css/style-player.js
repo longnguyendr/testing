@@ -34,4 +34,14 @@ export default StyleSheet.create({
     alignSelf: 'stretch',
     marginVertical: 10,
   },
+  imgbackground: {
+    width: '100%',
+    height: '100%',
+  },
+  hidden: {
+    display: 'none',
+  },
+  show: {
+    display: 'flex',
+  },
 });

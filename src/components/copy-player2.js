@@ -9,24 +9,14 @@ import {
   TouchableOpacity,
   PixelRatio,
   Dimensions,
-  Icon,
-  Button,
   Platform,
   ImageBackground,
 } from 'react-native';
-import {HeaderBackButton} from 'react-navigation-stack';
 import YouTube from 'react-native-youtube';
 import styles from './css/style-player';
 import YBKey from './env';
 
 export default class Player extends React.Component {
-  static navigationOptions = ({navigation, screenProps}) => {
-    const {params = {}} = navigation.state;
-    let headerLeft = (
-      <HeaderBackButton onPress={() => params.sendBackHandler()} />
-    );
-    return {headerLeft};
-  };
   constructor(props) {
     super(props);
 
@@ -35,7 +25,7 @@ export default class Player extends React.Component {
       status: null,
       quality: null,
       error: null,
-      isPlaying: true,
+      isPlaying: false,
       isLooping: false,
       isRel: false,
       duration: 0,
@@ -43,149 +33,89 @@ export default class Player extends React.Component {
       fullscreen: false,
       containerMounted: false,
       containerWidth: null,
-      playlist: null,
-      videoId: null,
+      playlist: this.props.navigation.state.params.channels.playlist,
       keyId: null,
       resumePlayAndroid: true,
       optDuration: 'duration',
       optTime: 'time',
       optNext: 'nextVideo',
       optPrevious: 'previousVideo',
-      resumevideosIndexProps: null,
-      resumeTimeProps: null,
-      resumeVideoIdProps: 'HM5YgzBw3zo',
+      videosIndexProps: '1',
+      currentTimeProps: 20,
+      VideoIdProps: 'HM5YgzBw3zo',
       videoResume: true,
       videosSeekTo: true,
-      videoShow: true,
-      show: false,
-      fetchingTime: true,
       // playlist: ['HcXNPI-IPPM', 'XXlZfc1TrD0', 'czcjU1w-c6k', 'uMK0prafzw0'],
     };
     this._youTubeRef = React.createRef();
     this.controlHandler = this.controlHandler.bind(this);
     this.autoPlayHandler = this.autoPlayHandler.bind(this);
-    this.setParamsHandler = this.setParamsHandler.bind(this);
-    this.fetchingTimePerSecHandler = this.fetchingTimePerSecHandler.bind(this);
-    this.timeCount = null;
   }
 
   // videoIndex, currentTime, VideoId
   UNSAFE_componentWillMount() {
     console.log('willmount');
-    // console.log(this.props);
     this.willMountHandler();
   }
 
   componentDidMount() {
     // console.log('componentdidmount: ', this._youTubeRef);
-    console.log(this.props);
-    this.setParamsHandler();
   }
   componentDidUpdate(prevProps, prevState) {
     // console.log('prevState: ', prevState);
     // console.log('current Time: ', this.state.currentTime);
     // console.log('prev Duration', prevState.duration);
-    if (this._youTubeRef.current !== null) {
-      if (this.state.status !== prevState.status) {
-        this.durationHandler(this.state.optDuration);
-      }
-      if (prevState.status === 'buffering' && this.state.fetchingTime) {
-        this.fetchingTimePerSecHandler();
-      }
-      if (
-        prevState.status === 'stopped' &&
-        this.state.currentTime === prevState.duration &&
-        prevState.duration !== 0
-      ) {
-        this.autoPlayHandler();
-        // console.log('current Time: ', this.state.currentTime);
-        // console.log('prev Duration', prevState.duration);
-      }
+    if (this.state.status !== prevState.status) {
+      this.durationHandler(this.state.optDuration);
+    } else if (
+      prevState.status === 'stopped' &&
+      this.state.currentTime === prevState.duration &&
+      prevState.duration !== 0
+    ) {
+      this.autoPlayHandler();
+      // console.log('current Time: ', this.state.currentTime);
+      // console.log('prev Duration', prevState.duration);
     }
   }
   shouldComponentUpdate(nextProps, nextState) {
     console.log('nextState', nextState);
     // console.log('nextProps', nextProps);
     // console.log(this.state.currentTime);
-    if (nextState.isReady) {
-      // console.log(this.state.playlist);
-      if (
-        this.state.videoResume &&
-        this.state.resumevideosIndexProps !== null
-      ) {
-        this.resumeVideoHandler();
-      }
-      if (
-        nextState.status === 'playing' &&
-        this.state.videosSeekTo &&
-        this.state.resumeTimeProps !== null
-      ) {
-        this.videosSeekToHandler();
-      }
-      if (nextState.status === 'playing' && this.state.videoShow) {
-        this.setState({show: true, videoShow: false});
-      }
-    }
-    // if (nextState.status === 'ended') {
-    //   console.log('next state ended');
-    //   this.durationHandler(this.state.optTime);
+    // if (
+    //   nextState.isReady &&
+    //   this.state.playlist.indexOf(this.state.VideoIdProps)
+    // ) {
+    //   // console.log(this.state.playlist);
+    //   if (this.state.videoResume) {
+    //     this.resumeVideoHandler();
+    //   } else if (nextState.status === 'playing' && this.state.videosSeekTo) {
+    //     this.videosSeekToHandler();
+    //   }
     // }
+    if (nextState.status === 'ended') {
+      console.log('next state ended');
+      this.durationHandler(this.state.optTime);
+    }
     return true;
   }
 
-  setParamsHandler = () => {
-    this.props.navigation.setParams({
-      sendBackHandler: this.sendBackHandler.bind(this),
-    });
-  };
-  sendBackHandler = () => {
-    console.log('sendbackButton press');
-    console.log(this.state.fetchingTime);
-
-    const {resumeData} = this.props.navigation.state.params;
-    console.log(resumeData);
-    clearInterval(this.timeCount);
-    if (!this.state.fetchingTime) {
-      this.props.navigation.state.params.returnData(
-        this.state.videosIndex,
-        this.state.currentTime,
-      );
-      this.props.navigation.goBack();
-    } else if (this.state.fetchingTime) {
-      if (resumeData !== null && resumeData !== undefined)
-        this.props.navigation.state.params.returnData(
-          resumeData.videoIndex,
-          resumeData.currentTime,
-        );
-      this.props.navigation.goBack();
-    }
-  };
   resumeVideoHandler() {
-    this._youTubeRef.current.playVideoAt(this.state.resumevideosIndexProps);
+    this._youTubeRef.current.playVideoAt(1);
     this.setState({videoResume: false, isPlaying: true});
   }
   videosSeekToHandler() {
-    this._youTubeRef.current.seekTo(this.state.resumeTimeProps);
-    this.setState({videosSeekTo: false, isPlaying: true});
+    this._youTubeRef.current.seekTo(4);
+    this.setState({videosSeekTo: false});
   }
   /**
    * Save state playlist and load player
    */
   willMountHandler() {
-    const {resumeData} = this.props.navigation.state.params;
-    // console.log('willmount resumeData: ', resumeData);
-    if (resumeData !== null && resumeData !== undefined) {
-      // console.log('not null');
-      this.setState({
-        resumevideosIndexProps: resumeData.videoIndex,
-        resumeTimeProps: resumeData.currentTime,
-      });
-    }
+    console.log( this.state.playlist.slice(1).toString());
     if (!this.state.containerMounted) {
       this.setState({
         containerMounted: true,
-        // videoId: this.state.playlist[0],
-        playlist: this.props.navigation.state.params.channels.playlist,
+        videoId: this.state.playlist.slice(1).toString(),
       });
     }
   }
@@ -209,24 +139,17 @@ export default class Player extends React.Component {
         case 'time':
           this._youTubeRef.current
             .getCurrentTime()
-            .then(currentTime =>
-              this.setState({currentTime, fetchingTime: false}),
-            )
+            .then(currentTime => this.setState({currentTime}))
             .catch(errorMessage => this.setState({error: errorMessage}));
-          // this._youTubeRef.current
-          //   .getVideosIndex()
-          //   .then(index => this.setState({videosIndex: index}))
-          //   .catch(errorMessage => this.setState({error: errorMessage}));
+          this._youTubeRef.current
+            .getVideosIndex()
+            .then(index => this.setState({videosIndex: index}))
+            .catch(errorMessage => this.setState({error: errorMessage}));
           break;
       }
     }
   }
-  fetchingTimePerSecHandler = () => {
-    this.timeCount = setInterval(
-      () => this.durationHandler(this.state.optTime),
-      500,
-    );
-  };
+
   /**
    * Next, Previous button event
    */
@@ -278,7 +201,6 @@ export default class Player extends React.Component {
     }
   };
   render() {
-    const {navigation} = this.props;
     // console.log(this._youTubeRef);
     // console.log('this.state.playlist: ', this.state.playlist);
     return (
@@ -303,7 +225,7 @@ export default class Player extends React.Component {
           }
         }}>
         {this.state.containerMounted && (
-          <View style={this.state.show ? styles.show : styles.hidden}>
+          <View>
             <YouTube
               //view components at Youtube.android.js in node_modules.
               // ref={component => {
@@ -313,8 +235,10 @@ export default class Player extends React.Component {
               // You must have an API Key for the player to load in Android
               // apiKey=""
               apiKey={YBKey}
-              // videoId={this.state.videoId}
-              videoIds={this.state.playlist}
+              videoId={this.state.videoId}
+              // videoIds={this.props.navigation.state.params.channels.playlist}
+              // videoIds={this.state.playlist}
+              // videoIds={['HcXNPI-IPPM', 'uMK0prafzw0', 'XXlZfc1TrD0']}
               // playlistId="PLF797E961509B4EB5"
               play={this.state.isPlaying}
               loop={this.state.isLooping}
@@ -398,7 +322,9 @@ export default class Player extends React.Component {
                       )
                   : ''
               }>
-              <Text style={styles.buttonText}>Update Progress & Duration</Text>
+              <Text style={styles.buttonText}>
+                Update Progress & Duration (Android)
+              </Text>
             </TouchableOpacity>
           </View>
         )}
@@ -407,6 +333,9 @@ export default class Player extends React.Component {
           Progress: {Math.trunc(this.state.currentTime)}s (
           {Math.trunc(this.state.duration / 60)}:
           {Math.trunc(this.state.duration % 60)}s)
+          {Platform.OS !== 'ios' && (
+            <Text> (Click Update Progress & Duration)</Text>
+          )}
         </Text>
 
         <Text style={styles.instructions}>

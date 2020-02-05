@@ -43,6 +43,6 @@ export default [
     id: 4,
     name: 'Music',
     icon: 'https://m.media-amazon.com/images/I/71rJUcj8mEL._SS500_.jpg',
-    playlist: ['RER1M-mC1yk', 'HM5YgzBw3zo'],
+    playlist: ['RER1M-mC1yk', 'HM5YgzBw3zo', 'wrZVqh3DG4M'],
   },
 ];

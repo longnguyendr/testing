@@ -1,6 +1,6 @@
 import React, {Component} from 'react';
 import {createAppContainer} from 'react-navigation';
-import {createStackNavigator} from 'react-navigation-stack';
+import {createStackNavigator, HeaderBackButton} from 'react-navigation-stack';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
 import SafeAreaView from 'react-native-safe-area-view';
 import Main from './src/main';
@@ -11,11 +11,28 @@ const MainNavigator = createStackNavigator(
   {
     Home: {screen: Home},
     Main: {screen: Main},
-    Player: {screen: Player},
+    Player: {
+      screen: Player,
+      // navigationOptions: ({navigation}) => {
+      //   return {
+      //     headerLeft: (
+      //       <HeaderBackButton onPress={() => console.log(navigation)} />
+      //     ),
+      //   };
+      // },
+    },
   },
   {
     initialRouteName: 'Home',
-    // initialRouteName: 'Main',
+    defaultNavigationOptions: {
+      headerStyle: {
+        backgroundColor: '#f4511e',
+      },
+      headerTintColor: '#fff',
+      headerTitleStyle: {
+        fontWeight: 'bold',
+      },
+    },
   },
 );
 
