@@ -53,7 +53,7 @@ export default class Player extends React.Component {
       optPrevious: 'previousVideo',
       resumevideosIndexProps: null,
       resumeTimeProps: null,
-      resumeVideoIdProps: 'HM5YgzBw3zo',
+      resumeVideoIdProps: null,
       videoResume: true,
       videosSeekTo: true,
       videoShow: true,
@@ -78,7 +78,9 @@ export default class Player extends React.Component {
 
   componentDidMount() {
     // console.log('componentdidmount: ', this._youTubeRef);
-    console.log(this.props);
+    // console.log('componentDidMount: ', this.props);
+    // console.log('state.playlist: ', this.state.playlist);
+    // console.log('State.resumeVideoID: ', this.state.resumeVideoIdProps);
     this.setParamsHandler();
   }
   componentDidUpdate(prevProps, prevState) {
@@ -104,24 +106,27 @@ export default class Player extends React.Component {
     }
   }
   shouldComponentUpdate(nextProps, nextState) {
-    console.log('nextState', nextState);
+    // console.log('nextState', nextState);
     // console.log('nextProps', nextProps);
     // console.log(this.state.currentTime);
     if (nextState.isReady) {
       // console.log(this.state.playlist);
-      if (
-        this.state.videoResume &&
-        this.state.resumevideosIndexProps !== null
-      ) {
-        this.resumeVideoHandler();
+      if (this.state.playlist.includes(this.state.resumeVideoIdProps)) {
+        if (
+          this.state.videoResume &&
+          this.state.resumevideosIndexProps !== null
+        ) {
+          this.resumeVideoHandler();
+        }
+        if (
+          nextState.status === 'playing' &&
+          this.state.videosSeekTo &&
+          this.state.resumeTimeProps !== null
+        ) {
+          this.videosSeekToHandler();
+        }
       }
-      if (
-        nextState.status === 'playing' &&
-        this.state.videosSeekTo &&
-        this.state.resumeTimeProps !== null
-      ) {
-        this.videosSeekToHandler();
-      }
+
       if (nextState.status === 'playing' && this.state.videoShow) {
         this.setState({show: true, videoShow: false});
       }
@@ -133,6 +138,9 @@ export default class Player extends React.Component {
     return true;
   }
 
+  /**
+   * Send back data of current video in order to resume
+   */
   setParamsHandler = () => {
     this.props.navigation.setParams({
       sendBackHandler: this.sendBackHandler.bind(this),
@@ -140,26 +148,37 @@ export default class Player extends React.Component {
   };
   sendBackHandler = () => {
     console.log('sendbackButton press');
-    console.log(this.state.fetchingTime);
-
+    // console.log(this.state.fetchingTime);
     const {resumeData} = this.props.navigation.state.params;
-    console.log(resumeData);
+    const {channels} = this.props.navigation.state.params;
+    // console.log(resumeData);
     clearInterval(this.timeCount);
     if (!this.state.fetchingTime) {
       this.props.navigation.state.params.returnData(
+        channels.id,
+        channels.name,
         this.state.videosIndex,
         this.state.currentTime,
+        this.state.playlist[this.state.videosIndex],
       );
       this.props.navigation.goBack();
     } else if (this.state.fetchingTime) {
-      if (resumeData !== null && resumeData !== undefined)
+      if (resumeData !== null && resumeData !== undefined) {
         this.props.navigation.state.params.returnData(
+          resumeData.channelID,
+          resumeData.channelName,
           resumeData.videoIndex,
           resumeData.currentTime,
+          resumeData.videoID,
         );
+      }
       this.props.navigation.goBack();
     }
   };
+
+  /**
+   * Resume video and time
+   */
   resumeVideoHandler() {
     this._youTubeRef.current.playVideoAt(this.state.resumevideosIndexProps);
     this.setState({videoResume: false, isPlaying: true});
@@ -173,12 +192,13 @@ export default class Player extends React.Component {
    */
   willMountHandler() {
     const {resumeData} = this.props.navigation.state.params;
-    // console.log('willmount resumeData: ', resumeData);
+    console.log('willmount resumeData: ', resumeData);
     if (resumeData !== null && resumeData !== undefined) {
       // console.log('not null');
       this.setState({
         resumevideosIndexProps: resumeData.videoIndex,
         resumeTimeProps: resumeData.currentTime,
+        resumeVideoIdProps: resumeData.videoID,
       });
     }
     if (!this.state.containerMounted) {
@@ -261,6 +281,9 @@ export default class Player extends React.Component {
     }
   };
 
+  /**
+   * Auto play after video ended
+   */
   autoPlayHandler = () => {
     const a = this.state.videosIndex;
     const b = this._youTubeRef.current.props.videoIds.length - 1;

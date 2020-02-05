@@ -1,5 +1,5 @@
 import React, {Component} from 'react';
-import {View, ScrollView, ImageBackground} from 'react-native';
+import {View, ScrollView, ImageBackground, AsyncStorage} from 'react-native';
 import data from './models/data';
 import Channels from './components/channels';
 import styles from './components/css/style-main';
@@ -11,7 +11,10 @@ export default class Main extends Component {
     this.handleClick = this.handleClick.bind(this);
     this.state = {
       sources: null,
+      navigateResumeData: null,
     };
+    this.getData = this.getData.bind(this);
+    this.storeData = this.storeData.bind(this);
   }
   componentDidMount() {
     console.log('Main Mounted');
@@ -22,38 +25,78 @@ export default class Main extends Component {
     this._refreshScreen.remove();
   }
 
+  /**
+   * Reload screen and update data when DidFocus
+   */
   reloadHandler = () => {
     this.setState({
       sources: data,
     });
     this._refreshScreen = this.props.navigation.addListener('didFocus', () => {
-      console.log('reload screen and update data');
-      console.log('state from parent: ', this.state);
-      console.log('Props from parent:', this.props);
+      // console.log('reload screen and update data');
+      // console.log('state from parent: ', this.state);
+      // console.log('Props from parent:', this.props);
       this.setState({
         sources: data,
       });
     });
   };
 
-  // returnData = (duration, )
-  handleClick = channels => {
+  /**
+   * Channels onClick handler
+   */
+  handleClick = async channels => {
     const {navigation} = this.props;
-    // this.props.navigation.push('Player', {channels: channels});
-    // navigation.actions.reset(
-    //   navigation.push('Player', {channels: channels}),
-    //   0,
-    // );
+    await this.getData(channels.id).then(dt =>
+      this.setState({navigateResumeData: dt}),
+    );
+    // console.log('handleClick: ', this.state.navigateResumeData);
+    // console.log(this.getData(channels.id));
     navigation.navigate('Player', {
       channels: channels,
-      resumeData: this.state.resumeData,
+      resumeData: this.state.navigateResumeData,
       returnData: this.returnData.bind(this),
     });
   };
 
-  returnData(videoIndex, currentTime) {
-    this.setState({resumeData: {videoIndex, currentTime}});
-  }
+  /**
+   * Catch and setstate for data received from child components
+   * @param {*} videoIndex
+   * @param {*} currentTime
+   * @param {*} videoID
+   */
+  returnData = (channelID, channelName, videoIndex, currentTime, videoID) => {
+    // console.log(videoID + ' ------- ' + videoIndex + ' ----- ' + currentTime);
+    this.setState({
+      resumeData: {channelID, channelName, videoIndex, currentTime, videoID},
+    });
+    this.storeData();
+  };
+
+  storeData = async () => {
+    try {
+      // console.log('store data: ');
+      await AsyncStorage.setItem(
+        this.state.resumeData.channelID.toString(),
+        JSON.stringify(this.state.resumeData),
+      );
+    } catch (e) {
+      // saving error
+      console.log('saveData error: ', e);
+    }
+  };
+  getData = async channelID => {
+    try {
+      const value = await AsyncStorage.getItem(channelID.toString());
+      if (value !== null) {
+        // console.log('data from storage: ', JSON.parse(value));
+        return JSON.parse(value);
+      }
+    } catch (e) {
+      // error reading value
+      console.log('getData error: ', e);
+    }
+  };
   render() {
     // console.log(this.props);
     return (
