@@ -43,5 +43,19 @@ Then enable the service before use the apiKey
 <p align="center">
 <img width="600px" height="250px" src ="./src/assets/image/youtube5.png" /></p>
 
+```
+Then copy the apiKey to test/src/components/env.js 
+```
+
+Run the App:
+
+```
+for development: npm run android
+```
+
+```
+for product: npm run product
+```
+
 ### Author
 Long Nguyen
