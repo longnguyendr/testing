@@ -20,6 +20,10 @@ $ npm install
 ```
 Before run the app you must generate the API Key:
 
+```
+if you dont have existing project create new one. After that you can create credential and apiKey.
+```
+
 <p align="center">
 <img width="600px" height="250px" src ="./src/assets/image/youtube1.png" /></p>
 
@@ -29,36 +33,15 @@ Before run the app you must generate the API Key:
 <p align="center">
 <img width="600px" height="250px" src ="./src/assets/image/youtube3.png" /></p>
 
+```
+Then enable the service before use the apiKey
+```
+
 <p align="center">
 <img width="600px" height="250px" src ="./src/assets/image/youtube4.png" /></p>
 
 <p align="center">
 <img width="600px" height="250px" src ="./src/assets/image/youtube5.png" /></p>
 
-
-or
-```
-$ cordova platform add android 
-```
-Login and download the Api_key at [Openweathermap](https://openweathermap.org/)
-```
-$ Create a file called "apiKey.json" in root folder and add the following object to the file:
-$
-{
-    "openWeatherKey": "Your API_KEY"
-}
-```
-Build the package:
-```
-$ npm run build-dev (for development mode) or npm run build-prod (for production mode)
-```
-Run the App:
-```
-$ cordova run android 
-```
-or
-```
-$ cordova run browser
-```
 ### Author
 Long Nguyen
