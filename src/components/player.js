@@ -68,11 +68,12 @@ export default class Player extends React.Component {
     this.autoPlayHandler = this.autoPlayHandler.bind(this);
     this.setParamsHandler = this.setParamsHandler.bind(this);
     this.sendBackHandler = this.sendBackHandler.bind(this);
+    this.shouldUpdateHandler = this.shouldUpdateHandler.bind(this);
+    this.didUpdateHandler = this.didUpdateHandler.bind(this);
     this.fetchingTimePerSecHandler = this.fetchingTimePerSecHandler.bind(this);
     this.timeCount = null;
   }
 
-  // videoIndex, currentTime, VideoId
   UNSAFE_componentWillMount() {
     console.log('willmount');
     // console.log(this.props);
@@ -91,7 +92,21 @@ export default class Player extends React.Component {
     );
   }
   shouldComponentUpdate(nextProps, nextState) {
-    // console.log('nextState', nextState);
+    this.shouldUpdateHandler(nextProps, nextState);
+    return true;
+  }
+  componentDidUpdate(prevProps, prevState) {
+    this.didUpdateHandler(prevProps, prevState);
+  }
+  componentWillUnmount() {
+    this.backHandler.remove();
+  }
+
+  /**
+   * Lifecycle handler
+   */
+  shouldUpdateHandler = (nextProps, nextState) => {
+    console.log('nextState', nextState);
     // console.log('nextProps', nextProps);
     // console.log(this.state.currentTime);
     if (this.state.fullscreen && !this.state.backHandlerOnFullScreen) {
@@ -127,9 +142,14 @@ export default class Player extends React.Component {
         this.setState({show: true, videoShow: false});
       }
     }
-    return true;
-  }
-  componentDidUpdate(prevProps, prevState) {
+    if (
+      nextState.status === 'ended' &&
+      nextState.currentTime === nextState.duration
+    ) {
+      this.autoPlayHandler();
+    }
+  };
+  didUpdateHandler = (prevProps, prevState) => {
     // console.log('prevState: ', prevState);
     // console.log('current Time: ', this.state.currentTime);
     // console.log('prev Duration', prevState.duration);
@@ -150,10 +170,7 @@ export default class Player extends React.Component {
         // console.log('prev Duration', prevState.duration);
       }
     }
-  }
-  componentWillUnmount() {
-    this.backHandler.remove();
-  }
+  };
   /**
    * Send back data of current video in order to resume
    */
@@ -250,10 +267,10 @@ export default class Player extends React.Component {
               this.setState({currentTime, fetchingTime: false}),
             )
             .catch(errorMessage => this.setState({error: errorMessage}));
-          // this._youTubeRef.current
-          //   .getVideosIndex()
-          //   .then(index => this.setState({videosIndex: index}))
-          //   .catch(errorMessage => this.setState({error: errorMessage}));
+          this._youTubeRef.current
+            .getVideosIndex()
+            .then(index => this.setState({videosIndex: index}))
+            .catch(errorMessage => this.setState({error: errorMessage}));
           break;
       }
     }
@@ -362,7 +379,8 @@ export default class Player extends React.Component {
                 loop={this.state.isLooping}
                 rel={this.state.isRel}
                 fullscreen={this.state.fullscreen}
-                controls={0}
+                controls={1}
+                showInfo={false}
                 style={[
                   {
                     height: PixelRatio.roundToNearestPixel(
