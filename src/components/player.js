@@ -8,6 +8,7 @@ import {
   ScrollView,
   TouchableOpacity,
   PixelRatio,
+  BackHandler,
   Dimensions,
   Icon,
   Button,
@@ -59,12 +60,14 @@ export default class Player extends React.Component {
       videoShow: true,
       show: false,
       fetchingTime: true,
+      backHandlerOnFullScreen: true,
       // playlist: ['HcXNPI-IPPM', 'XXlZfc1TrD0', 'czcjU1w-c6k', 'uMK0prafzw0'],
     };
     this._youTubeRef = React.createRef();
     this.controlHandler = this.controlHandler.bind(this);
     this.autoPlayHandler = this.autoPlayHandler.bind(this);
     this.setParamsHandler = this.setParamsHandler.bind(this);
+    this.sendBackHandler = this.sendBackHandler.bind(this);
     this.fetchingTimePerSecHandler = this.fetchingTimePerSecHandler.bind(this);
     this.timeCount = null;
   }
@@ -82,6 +85,49 @@ export default class Player extends React.Component {
     // console.log('state.playlist: ', this.state.playlist);
     // console.log('State.resumeVideoID: ', this.state.resumeVideoIdProps);
     this.setParamsHandler();
+    this.backHandler = BackHandler.addEventListener(
+      'hardwareBackPress',
+      this.sendBackHandler,
+    );
+  }
+  shouldComponentUpdate(nextProps, nextState) {
+    // console.log('nextState', nextState);
+    // console.log('nextProps', nextProps);
+    // console.log(this.state.currentTime);
+    if (this.state.fullscreen && !this.state.backHandlerOnFullScreen) {
+      this.backHandler.remove();
+      this.setState({backHandlerOnFullScreen: true});
+    }
+    if (!this.state.fullscreen && this.state.backHandlerOnFullScreen) {
+      this.backHandler = BackHandler.addEventListener(
+        'hardwareBackPress',
+        this.sendBackHandler,
+      );
+      this.setState({backHandlerOnFullScreen: false});
+    }
+    if (nextState.isReady) {
+      // console.log(this.state.playlist);
+      if (this.state.playlist.includes(this.state.resumeVideoIdProps)) {
+        if (
+          this.state.videoResume &&
+          this.state.resumevideosIndexProps !== null
+        ) {
+          this.resumeVideoHandler();
+        }
+        if (
+          nextState.status === 'playing' &&
+          this.state.videosSeekTo &&
+          this.state.resumeTimeProps !== null
+        ) {
+          this.videosSeekToHandler();
+        }
+      }
+
+      if (nextState.status === 'playing' && this.state.videoShow) {
+        this.setState({show: true, videoShow: false});
+      }
+    }
+    return true;
   }
   componentDidUpdate(prevProps, prevState) {
     // console.log('prevState: ', prevState);
@@ -105,48 +151,18 @@ export default class Player extends React.Component {
       }
     }
   }
-  shouldComponentUpdate(nextProps, nextState) {
-    // console.log('nextState', nextState);
-    // console.log('nextProps', nextProps);
-    // console.log(this.state.currentTime);
-    if (nextState.isReady) {
-      // console.log(this.state.playlist);
-      if (this.state.playlist.includes(this.state.resumeVideoIdProps)) {
-        if (
-          this.state.videoResume &&
-          this.state.resumevideosIndexProps !== null
-        ) {
-          this.resumeVideoHandler();
-        }
-        if (
-          nextState.status === 'playing' &&
-          this.state.videosSeekTo &&
-          this.state.resumeTimeProps !== null
-        ) {
-          this.videosSeekToHandler();
-        }
-      }
-
-      if (nextState.status === 'playing' && this.state.videoShow) {
-        this.setState({show: true, videoShow: false});
-      }
-    }
-    // if (nextState.status === 'ended') {
-    //   console.log('next state ended');
-    //   this.durationHandler(this.state.optTime);
-    // }
-    return true;
+  componentWillUnmount() {
+    this.backHandler.remove();
   }
-
   /**
    * Send back data of current video in order to resume
    */
   setParamsHandler = () => {
     this.props.navigation.setParams({
-      sendBackHandler: this.sendBackHandler.bind(this),
+      sendBackHandler: this.sendBackHandler,
     });
   };
-  sendBackHandler = () => {
+  sendBackHandler = async opt => {
     console.log('sendbackButton press');
     // console.log(this.state.fetchingTime);
     const {resumeData} = this.props.navigation.state.params;
@@ -154,7 +170,7 @@ export default class Player extends React.Component {
     // console.log(resumeData);
     clearInterval(this.timeCount);
     if (!this.state.fetchingTime) {
-      this.props.navigation.state.params.returnData(
+      await this.props.navigation.state.params.returnData(
         channels.id,
         channels.name,
         this.state.videosIndex,
@@ -164,7 +180,7 @@ export default class Player extends React.Component {
       this.props.navigation.goBack();
     } else if (this.state.fetchingTime) {
       if (resumeData !== null && resumeData !== undefined) {
-        this.props.navigation.state.params.returnData(
+        await this.props.navigation.state.params.returnData(
           resumeData.channelID,
           resumeData.channelName,
           resumeData.videoIndex,
@@ -174,23 +190,24 @@ export default class Player extends React.Component {
       }
       this.props.navigation.goBack();
     }
+    return true;
   };
 
   /**
    * Resume video and time
    */
-  resumeVideoHandler() {
+  resumeVideoHandler = () => {
     this._youTubeRef.current.playVideoAt(this.state.resumevideosIndexProps);
     this.setState({videoResume: false, isPlaying: true});
-  }
-  videosSeekToHandler() {
+  };
+  videosSeekToHandler = () => {
     this._youTubeRef.current.seekTo(this.state.resumeTimeProps);
     this.setState({videosSeekTo: false, isPlaying: true});
-  }
+  };
   /**
    * Save state playlist and load player
    */
-  willMountHandler() {
+  willMountHandler = () => {
     const {resumeData} = this.props.navigation.state.params;
     console.log('willmount resumeData: ', resumeData);
     if (resumeData !== null && resumeData !== undefined) {
@@ -208,12 +225,12 @@ export default class Player extends React.Component {
         playlist: this.props.navigation.state.params.channels.playlist,
       });
     }
-  }
+  };
 
   /**
    * fetching time and duration event
    */
-  durationHandler(Opt) {
+  durationHandler = Opt => {
     if (this._youTubeRef.current !== null) {
       switch (Opt) {
         case 'duration':
@@ -240,7 +257,7 @@ export default class Player extends React.Component {
           break;
       }
     }
-  }
+  };
   fetchingTimePerSecHandler = () => {
     this.timeCount = setInterval(
       () => this.durationHandler(this.state.optTime),
@@ -326,42 +343,45 @@ export default class Player extends React.Component {
           }
         }}>
         {this.state.containerMounted && (
-          <View style={this.state.show ? styles.show : styles.hidden}>
-            <YouTube
-              //view components at Youtube.android.js in node_modules.
-              // ref={component => {
-              //   this._youTubeRef = component;
-              // }}
-              ref={this._youTubeRef}
-              // You must have an API Key for the player to load in Android
-              // apiKey=""
-              apiKey={YBKey}
-              // videoId={this.state.videoId}
-              videoIds={this.state.playlist}
-              // playlistId="PLF797E961509B4EB5"
-              play={this.state.isPlaying}
-              loop={this.state.isLooping}
-              rel={this.state.isRel}
-              fullscreen={this.state.fullscreen}
-              controls={0}
-              style={[
-                {
-                  height: PixelRatio.roundToNearestPixel(
-                    this.state.containerWidth / (16 / 9),
-                  ),
-                },
-                styles.player,
-              ]}
-              onError={e => this.setState({error: e.error})}
-              onReady={e => this.setState({isReady: true})}
-              onChangeState={e => this.setState({status: e.state})}
-              onChangeQuality={e => this.setState({quality: e.quality})}
-              onChangeFullscreen={e =>
-                this.setState({fullscreen: e.isFullscreen})
-              }
-              onProgress={e => this.stateChangeHandler(e)}
-              resumePlayAndroid={this.state.resumePlayAndroid}
-            />
+          <View
+            style={this.state.show ? styles.playerContainer : styles.hidden}>
+            <View>
+              <YouTube
+                //view components at Youtube.android.js in node_modules.
+                // ref={component => {
+                //   this._youTubeRef = component;
+                // }}
+                ref={this._youTubeRef}
+                // You must have an API Key for the player to load in Android
+                // apiKey=""
+                apiKey={YBKey}
+                // videoId={this.state.videoId}
+                videoIds={this.state.playlist}
+                // playlistId="PLF797E961509B4EB5"
+                play={this.state.isPlaying}
+                loop={this.state.isLooping}
+                rel={this.state.isRel}
+                fullscreen={this.state.fullscreen}
+                controls={0}
+                style={[
+                  {
+                    height: PixelRatio.roundToNearestPixel(
+                      this.state.containerWidth / (16 / 9),
+                    ),
+                  },
+                  styles.player,
+                ]}
+                onError={e => this.setState({error: e.error})}
+                onReady={e => this.setState({isReady: true})}
+                onChangeState={e => this.setState({status: e.state})}
+                onChangeQuality={e => this.setState({quality: e.quality})}
+                onChangeFullscreen={e =>
+                  this.setState({fullscreen: e.isFullscreen})
+                }
+                onProgress={e => this.stateChangeHandler(e)}
+                resumePlayAndroid={this.state.resumePlayAndroid}
+              />
+            </View>
           </View>
         )}
 
