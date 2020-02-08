@@ -11,10 +11,9 @@ import {
   BackHandler,
   Dimensions,
   Icon,
-  Button,
-  Platform,
-  ImageBackground,
+  ProgressBarAndroid,
 } from 'react-native';
+import ProgressBar from 'react-native-progress/Bar';
 import {HeaderBackButton} from 'react-navigation-stack';
 import YouTube from 'react-native-youtube';
 import styles from './css/style-player';
@@ -52,6 +51,7 @@ export default class Player extends React.Component {
       optTime: 'time',
       optNext: 'nextVideo',
       optPrevious: 'previousVideo',
+      progress: 0,
       resumevideosIndexProps: null,
       resumeTimeProps: null,
       resumeVideoIdProps: null,
@@ -263,9 +263,16 @@ export default class Player extends React.Component {
         case 'time':
           this._youTubeRef.current
             .getCurrentTime()
-            .then(currentTime =>
-              this.setState({currentTime, fetchingTime: false}),
-            )
+            .then(currentTime => {
+              this.setState({
+                currentTime,
+                fetchingTime: false,
+                // progress: currentTime / this.state.duration,
+              });
+              !isNaN(currentTime / this.state.duration)
+                ? this.setState({progress: currentTime / this.state.duration})
+                : '';
+            })
             .catch(errorMessage => this.setState({error: errorMessage}));
           this._youTubeRef.current
             .getVideosIndex()
@@ -278,7 +285,7 @@ export default class Player extends React.Component {
   fetchingTimePerSecHandler = () => {
     this.timeCount = setInterval(
       () => this.durationHandler(this.state.optTime),
-      500,
+      400,
     );
   };
   /**
@@ -334,8 +341,23 @@ export default class Player extends React.Component {
       this._youTubeRef.current.playVideoAt(0);
     }
   };
+
+  secToTime = time => {
+    // eslint-disable-next-line no-bitwise
+    return ~~(time / 60) + ':' + (time % 60 < 10 ? '0' : '') + ~~(time % 60);
+  };
+  durationToTime = () => {
+    return (
+      Math.trunc(this.state.duration / 60) +
+      ':' +
+      (this.state.duration % 60 < 10 ? '0' : '') +
+      Math.trunc(this.state.duration % 60)
+    );
+  };
+
   render() {
     const {navigation} = this.props;
+    // console.log(progress);
     // console.log(this._youTubeRef);
     // console.log('this.state.playlist: ', this.state.playlist);
     return (
@@ -396,7 +418,7 @@ export default class Player extends React.Component {
                 onChangeFullscreen={e =>
                   this.setState({fullscreen: e.isFullscreen})
                 }
-                onProgress={e => this.stateChangeHandler(e)}
+                onProgress={e => this.progressHandler(e)}
                 resumePlayAndroid={this.state.resumePlayAndroid}
               />
             </View>
@@ -440,10 +462,14 @@ export default class Player extends React.Component {
 
         {/* Show Progress */}
         <Text style={styles.instructions}>
-          Progress: {Math.trunc(this.state.currentTime)}s (
-          {Math.trunc(this.state.duration / 60)}:
-          {Math.trunc(this.state.duration % 60)}s)
+          Progress:{' '}
+          {this.secToTime(
+            Math.floor(this.state.progress * this.state.duration),
+          )}{' '}
+          ({this.durationToTime()})
         </Text>
+
+        <ProgressBar progress={this.state.progress} width={250} height={20} />
 
         <Text style={styles.instructions}>
           {this.state.error ? 'Error: ' + this.state.error : ''}

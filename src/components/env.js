@@ -1,2 +1,2 @@
-const YBKey = 'Your_APIKEY';
+const YBKey = 'AIzaSyAWErKodoHCETxNFuxsbMa-OD5NL0-72nA';
 module.exports = YBKey;
