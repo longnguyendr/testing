@@ -33,9 +33,6 @@ export default class Main extends Component {
       sources: data,
     });
     this._refreshScreen = this.props.navigation.addListener('didFocus', () => {
-      // console.log('reload screen and update data');
-      // console.log('state from parent: ', this.state);
-      // console.log('Props from parent:', this.props);
       this.setState({
         sources: data,
       });
@@ -50,8 +47,6 @@ export default class Main extends Component {
     await this.getData(channels.id).then(dt =>
       this.setState({navigateResumeData: dt}),
     );
-    // console.log('handleClick: ', this.state.navigateResumeData);
-    // console.log(this.getData(channels.id));
     navigation.navigate('Player', {
       channels: channels,
       resumeData: this.state.navigateResumeData,
@@ -66,7 +61,6 @@ export default class Main extends Component {
    * @param {*} videoID
    */
   returnData = (channelID, channelName, videoIndex, currentTime, videoID) => {
-    // console.log(videoID + ' ------- ' + videoIndex + ' ----- ' + currentTime);
     this.setState({
       resumeData: {channelID, channelName, videoIndex, currentTime, videoID},
     });
@@ -75,7 +69,6 @@ export default class Main extends Component {
 
   storeData = async () => {
     try {
-      // console.log('store data: ');
       await AsyncStorage.setItem(
         this.state.resumeData.channelID.toString(),
         JSON.stringify(this.state.resumeData),
@@ -89,7 +82,6 @@ export default class Main extends Component {
     try {
       const value = await AsyncStorage.getItem(channelID.toString());
       if (value !== null) {
-        // console.log('data from storage: ', JSON.parse(value));
         return JSON.parse(value);
       }
     } catch (e) {
@@ -98,7 +90,6 @@ export default class Main extends Component {
     }
   };
   render() {
-    // console.log(this.props);
     return (
       <View style={styles.container}>
         <ImageBackground

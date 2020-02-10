@@ -1,17 +1,12 @@
 /* eslint-disable no-unused-vars */
-/*This is an Example of YouTube integration in React Native*/
 import React from 'react';
 import {
-  StyleSheet,
   View,
   Text,
   ScrollView,
   TouchableOpacity,
   PixelRatio,
   BackHandler,
-  Dimensions,
-  Icon,
-  ProgressBarAndroid,
 } from 'react-native';
 import ProgressBar from 'react-native-progress/Bar';
 import {HeaderBackButton} from 'react-navigation-stack';
@@ -51,6 +46,7 @@ export default class Player extends React.Component {
       optTime: 'time',
       optNext: 'nextVideo',
       optPrevious: 'previousVideo',
+      optAutoPlay: 'autoPlay',
       progress: 0,
       resumevideosIndexProps: null,
       resumeTimeProps: null,
@@ -61,11 +57,9 @@ export default class Player extends React.Component {
       show: false,
       fetchingTime: true,
       backHandlerOnFullScreen: true,
-      // playlist: ['HcXNPI-IPPM', 'XXlZfc1TrD0', 'czcjU1w-c6k', 'uMK0prafzw0'],
     };
     this._youTubeRef = React.createRef();
     this.controlHandler = this.controlHandler.bind(this);
-    this.autoPlayHandler = this.autoPlayHandler.bind(this);
     this.setParamsHandler = this.setParamsHandler.bind(this);
     this.sendBackHandler = this.sendBackHandler.bind(this);
     this.shouldUpdateHandler = this.shouldUpdateHandler.bind(this);
@@ -75,16 +69,10 @@ export default class Player extends React.Component {
   }
 
   UNSAFE_componentWillMount() {
-    console.log('willmount');
-    // console.log(this.props);
     this.willMountHandler();
   }
 
   componentDidMount() {
-    // console.log('componentdidmount: ', this._youTubeRef);
-    // console.log('componentDidMount: ', this.props);
-    // console.log('state.playlist: ', this.state.playlist);
-    // console.log('State.resumeVideoID: ', this.state.resumeVideoIdProps);
     this.setParamsHandler();
     this.backHandler = BackHandler.addEventListener(
       'hardwareBackPress',
@@ -106,9 +94,6 @@ export default class Player extends React.Component {
    * Lifecycle handler
    */
   shouldUpdateHandler = (nextProps, nextState) => {
-    console.log('nextState', nextState);
-    // console.log('nextProps', nextProps);
-    // console.log(this.state.currentTime);
     if (this.state.fullscreen && !this.state.backHandlerOnFullScreen) {
       this.backHandler.remove();
       this.setState({backHandlerOnFullScreen: true});
@@ -121,7 +106,6 @@ export default class Player extends React.Component {
       this.setState({backHandlerOnFullScreen: false});
     }
     if (nextState.isReady) {
-      // console.log(this.state.playlist);
       if (this.state.playlist.includes(this.state.resumeVideoIdProps)) {
         if (
           this.state.videoResume &&
@@ -146,13 +130,10 @@ export default class Player extends React.Component {
       nextState.status === 'ended' &&
       nextState.currentTime === nextState.duration
     ) {
-      this.autoPlayHandler();
+      this.controlHandler(this.state.optAutoPlay);
     }
   };
   didUpdateHandler = (prevProps, prevState) => {
-    // console.log('prevState: ', prevState);
-    // console.log('current Time: ', this.state.currentTime);
-    // console.log('prev Duration', prevState.duration);
     if (this._youTubeRef.current !== null) {
       if (this.state.status !== prevState.status) {
         this.durationHandler(this.state.optDuration);
@@ -165,9 +146,7 @@ export default class Player extends React.Component {
         this.state.currentTime === prevState.duration &&
         prevState.duration !== 0
       ) {
-        this.autoPlayHandler();
-        // console.log('current Time: ', this.state.currentTime);
-        // console.log('prev Duration', prevState.duration);
+        this.controlHandler(this.state.optAutoPlay);
       }
     }
   };
@@ -180,11 +159,8 @@ export default class Player extends React.Component {
     });
   };
   sendBackHandler = async opt => {
-    console.log('sendbackButton press');
-    // console.log(this.state.fetchingTime);
     const {resumeData} = this.props.navigation.state.params;
     const {channels} = this.props.navigation.state.params;
-    // console.log(resumeData);
     clearInterval(this.timeCount);
     if (!this.state.fetchingTime) {
       await this.props.navigation.state.params.returnData(
@@ -226,9 +202,7 @@ export default class Player extends React.Component {
    */
   willMountHandler = () => {
     const {resumeData} = this.props.navigation.state.params;
-    console.log('willmount resumeData: ', resumeData);
     if (resumeData !== null && resumeData !== undefined) {
-      // console.log('not null');
       this.setState({
         resumevideosIndexProps: resumeData.videoIndex,
         resumeTimeProps: resumeData.currentTime,
@@ -238,7 +212,6 @@ export default class Player extends React.Component {
     if (!this.state.containerMounted) {
       this.setState({
         containerMounted: true,
-        // videoId: this.state.playlist[0],
         playlist: this.props.navigation.state.params.channels.playlist,
       });
     }
@@ -250,7 +223,7 @@ export default class Player extends React.Component {
   durationHandler = Opt => {
     if (this._youTubeRef.current !== null) {
       switch (Opt) {
-        case 'duration':
+        case this.state.optDuration:
           this._youTubeRef.current
             .getDuration()
             .then(duration => this.setState({duration}))
@@ -260,14 +233,13 @@ export default class Player extends React.Component {
             .then(index => this.setState({videosIndex: index}))
             .catch(errorMessage => this.setState({error: errorMessage}));
           break;
-        case 'time':
+        case this.state.optTime:
           this._youTubeRef.current
             .getCurrentTime()
             .then(currentTime => {
               this.setState({
                 currentTime,
                 fetchingTime: false,
-                // progress: currentTime / this.state.duration,
               });
               !isNaN(currentTime / this.state.duration)
                 ? this.setState({progress: currentTime / this.state.duration})
@@ -289,56 +261,47 @@ export default class Player extends React.Component {
     );
   };
   /**
-   * Next, Previous button event
+   * Next, Previous button and AutoPlay event
    */
   controlHandler = controlOpt => {
-    const a = this.state.videosIndex;
-    const b = this._youTubeRef.current.props.videoIds.length - 1;
-    const c = a < b;
-    const d = this.state.videosIndex > 0;
-    const e = this._youTubeRef.current.props.videoIds !== null;
-    const f = Array.isArray(this._youTubeRef.current.props.videoIds);
-    const g = a === b;
-    const h = a === 0;
+    const currentVideoIndex = this.state.videosIndex;
+    const lastVideoIndex = this._youTubeRef.current.props.videoIds.length - 1;
+    const isNotLastVideoIndex = currentVideoIndex < lastVideoIndex;
+    const isNotFirstVideo = this.state.videosIndex > 0;
+    const isPlaylistNotEmpty = this._youTubeRef.current.props.videoIds !== null;
+    const isPlaylistArray = Array.isArray(
+      this._youTubeRef.current.props.videoIds,
+    );
+    const isLastVideoIndex = currentVideoIndex === lastVideoIndex;
+    const isFirstVideoIndex = currentVideoIndex === 0;
     if (this._youTubeRef.current !== null) {
       switch (controlOpt) {
         case this.state.optNext:
-          console.log(controlOpt);
-          if (c && e && f) {
+          if (isNotLastVideoIndex && isPlaylistNotEmpty && isPlaylistArray) {
             this._youTubeRef.current.playVideoAt(this.state.videosIndex + 1);
-          } else if (g) {
+          } else if (isLastVideoIndex) {
             this._youTubeRef.current.playVideoAt(0);
           }
           break;
         case this.state.optPrevious:
-          console.log(controlOpt);
-          if (d && e && f) {
+          if (isNotFirstVideo && isPlaylistNotEmpty && isPlaylistArray) {
             this._youTubeRef.current.playVideoAt(this.state.videosIndex - 1);
-          } else if (h) {
-            this._youTubeRef.current.playVideoAt(b);
+          } else if (isFirstVideoIndex) {
+            this._youTubeRef.current.playVideoAt(lastVideoIndex);
+          }
+          break;
+        case this.state.optAutoPlay:
+          this.setState({
+            currentTime: 0,
+            error: '',
+          });
+          if (isNotLastVideoIndex && isPlaylistNotEmpty && isPlaylistArray) {
+            this._youTubeRef.current.playVideoAt(this.state.videosIndex + 1);
+          } else if (isLastVideoIndex) {
+            this._youTubeRef.current.playVideoAt(0);
           }
           break;
       }
-    }
-  };
-
-  /**
-   * Auto play after video ended
-   */
-  autoPlayHandler = () => {
-    const a = this.state.videosIndex;
-    const b = this._youTubeRef.current.props.videoIds.length - 1;
-    const c = a < b;
-    const d = this._youTubeRef.current.props.videoIds !== null;
-    const e = Array.isArray(this._youTubeRef.current.props.videoIds);
-    const f = a === b;
-    this.setState({
-      currentTime: 0,
-    });
-    if (c && d && e) {
-      this._youTubeRef.current.playVideoAt(this.state.videosIndex + 1);
-    } else if (f) {
-      this._youTubeRef.current.playVideoAt(0);
     }
   };
 
@@ -357,9 +320,6 @@ export default class Player extends React.Component {
 
   render() {
     const {navigation} = this.props;
-    // console.log(progress);
-    // console.log(this._youTubeRef);
-    // console.log('this.state.playlist: ', this.state.playlist);
     return (
       <ScrollView
         key={this.state.keyId}
@@ -371,12 +331,6 @@ export default class Player extends React.Component {
             layout: {width},
           },
         }) => {
-          // if (!this.state.containerMounted) {
-          //   this.setState({
-          //     containerMounted: true,
-          //     playlist: this.props.navigation.state.params.channels.playlist,
-          //   });
-          // }
           if (this.state.containerWidth !== width) {
             this.setState({containerWidth: width});
           }
@@ -386,17 +340,9 @@ export default class Player extends React.Component {
             style={this.state.show ? styles.playerContainer : styles.hidden}>
             <View>
               <YouTube
-                //view components at Youtube.android.js in node_modules.
-                // ref={component => {
-                //   this._youTubeRef = component;
-                // }}
                 ref={this._youTubeRef}
-                // You must have an API Key for the player to load in Android
-                // apiKey=""
                 apiKey={YBKey}
-                // videoId={this.state.videoId}
                 videoIds={this.state.playlist}
-                // playlistId="PLF797E961509B4EB5"
                 play={this.state.isPlaying}
                 loop={this.state.isLooping}
                 rel={this.state.isRel}
